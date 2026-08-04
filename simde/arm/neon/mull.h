@@ -172,6 +172,14 @@ simde_uint32x4_t
 simde_vmull_u16(simde_uint16x4_t a, simde_uint16x4_t b) {
   #if defined(SIMDE_ARM_NEON_A32V7_NATIVE)
     return vmull_u16(a, b);
+  #elif defined(SIMDE_LOONGARCH_LSX_NATIVE)
+    simde_uint32x4_private r_;
+    simde_uint16x4_private
+      a_ = simde_uint16x4_to_private(a),
+      b_ = simde_uint16x4_to_private(b);
+
+    r_.m128i = __lsx_vmul_w(__lsx_vsllwil_wu_hu(simde_x_lsx_load64(&a_.values), 0), __lsx_vsllwil_wu_hu(simde_x_lsx_load64(&b_.values), 0));
+    return simde_uint32x4_from_private(r_);
   #elif SIMDE_NATURAL_VECTOR_SIZE_GE(128)
     return simde_vmulq_u32(simde_vmovl_u16(a), simde_vmovl_u16(b));
   #else

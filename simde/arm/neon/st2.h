@@ -536,6 +536,18 @@ simde_vst2q_u8(uint8_t *ptr, simde_uint8x16x2_t val) {
     dest = __riscv_vset_v_u8m1_u8m1x2 (dest, 0, a_[0].sv128);
     dest = __riscv_vset_v_u8m1_u8m1x2 (dest, 1, a_[1].sv128);
     __riscv_vsseg2e8_v_u8m1x2 (ptr, dest, 16);
+  #elif defined(SIMDE_LOONGARCH_LSX_NATIVE)
+    simde_uint8x16_private
+      a_ = simde_uint8x16_to_private(val.val[0]),
+      b_ = simde_uint8x16_to_private(val.val[1]);
+    static const uint8_t lo_mask[16] = {16,0,17,1,18,2,19,3,20,4,21,5,22,6,23,7};
+    static const uint8_t hi_mask[16] = {24,8,25,9,26,10,27,11,28,12,29,13,30,14,31,15};
+    __m128i mlo = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, lo_mask), 0);
+    __m128i mhi = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, hi_mask), 0);
+    __lsx_vst(__lsx_vshuf_b(a_.m128i, b_.m128i, mlo),
+              HEDLEY_REINTERPRET_CAST(void*, ptr), 0);
+    __lsx_vst(__lsx_vshuf_b(a_.m128i, b_.m128i, mhi),
+              HEDLEY_REINTERPRET_CAST(void*, ptr + 16), 0);
   #else
     simde_uint8x16x2_t r = simde_vzipq_u8(val.val[0], val.val[1]);
     simde_vst1q_u8(ptr, r.val[0]);

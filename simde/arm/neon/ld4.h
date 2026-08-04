@@ -476,6 +476,33 @@ simde_vld4q_s16(int16_t const ptr[HEDLEY_ARRAY_PARAM(32)]) {
       a_[1].sv128 = __riscv_vget_v_i16m1x4_i16m1(dest, 1);
       a_[2].sv128 = __riscv_vget_v_i16m1x4_i16m1(dest, 2);
       a_[3].sv128 = __riscv_vget_v_i16m1x4_i16m1(dest, 3);
+    #elif defined(SIMDE_LOONGARCH_LSX_NATIVE)
+      __m128i R0=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,ptr),0);
+      __m128i R1=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,ptr+8),0);
+      __m128i R2=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,ptr+16),0);
+      __m128i R3=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,ptr+24),0);
+      static const uint8_t alo[16]={0x00,0x00,0x04,0x00,0x08,0x00,0x0C,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00};
+      static const uint8_t ahi[16]={0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x00,0x00,0x04,0x00,0x08,0x00,0x0C,0x00};
+      static const uint8_t blo[16]={0x01,0x00,0x05,0x00,0x09,0x00,0x0D,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00};
+      static const uint8_t bhi[16]={0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x01,0x00,0x05,0x00,0x09,0x00,0x0D,0x00};
+      static const uint8_t clo[16]={0x02,0x00,0x06,0x00,0x0A,0x00,0x0E,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00};
+      static const uint8_t chi[16]={0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x02,0x00,0x06,0x00,0x0A,0x00,0x0E,0x00};
+      static const uint8_t dlo[16]={0x03,0x00,0x07,0x00,0x0B,0x00,0x0F,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00};
+      static const uint8_t dhi[16]={0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x03,0x00,0x07,0x00,0x0B,0x00,0x0F,0x00};
+      static const uint8_t sl[16]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0,0,0,0,0,0,0,0};
+      __m128i ms=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,sl),0);
+      __m128i ml=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,alo),0);
+      __m128i mh=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,ahi),0);
+      a_[0].m128i=__lsx_vbitsel_v(__lsx_vshuf_h(mh,R3,R2),__lsx_vshuf_h(ml,R1,R0),ms);
+      ml=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,blo),0);
+      mh=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,bhi),0);
+      a_[1].m128i=__lsx_vbitsel_v(__lsx_vshuf_h(mh,R3,R2),__lsx_vshuf_h(ml,R1,R0),ms);
+      ml=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,clo),0);
+      mh=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,chi),0);
+      a_[2].m128i=__lsx_vbitsel_v(__lsx_vshuf_h(mh,R3,R2),__lsx_vshuf_h(ml,R1,R0),ms);
+      ml=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,dlo),0);
+      mh=__lsx_vld(HEDLEY_REINTERPRET_CAST(const void*,dhi),0);
+      a_[3].m128i=__lsx_vbitsel_v(__lsx_vshuf_h(mh,R3,R2),__lsx_vshuf_h(ml,R1,R0),ms);
     #else
       for (size_t i = 0; i < (sizeof(simde_int16x8_t) / sizeof(*ptr)) * 4 ; i++) {
         a_[i % 4].values[i / 4] = ptr[i];
@@ -602,6 +629,58 @@ simde_vld4q_u8(uint8_t const ptr[HEDLEY_ARRAY_PARAM(64)]) {
       simde_uint8x16_from_private(r_[1]),
       simde_uint8x16_from_private(r_[2]),
       simde_uint8x16_from_private(r_[3])
+    } };
+    return r;
+  #elif defined(SIMDE_LOONGARCH_LSX_NATIVE)
+    __m128i R0 = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, ptr), 0);
+    __m128i R1 = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, ptr + 16), 0);
+    __m128i R2 = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, ptr + 32), 0);
+    __m128i R3 = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, ptr + 48), 0);
+
+    static const uint8_t ma_lo[16] = {0,4,8,12, 0x10,0x14,0x18,0x1C, 0,0,0,0,0,0,0,0};
+    static const uint8_t ma_hi[16] = {0,0,0,0,0,0,0,0, 0,4,8,12, 0x10,0x14,0x18,0x1C};
+    static const uint8_t sel4[16]  = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0,0,0,0,0,0,0,0};
+    __m128i sl = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, sel4), 0);
+
+    /* Stream A */
+    __m128i ml = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, ma_lo), 0);
+    __m128i mh = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, ma_hi), 0);
+    __m128i A_lo = __lsx_vshuf_b(R1, R0, ml);
+    __m128i A_hi = __lsx_vshuf_b(R3, R2, mh);
+    __m128i A = __lsx_vbitsel_v(A_hi, A_lo, sl);
+
+    /* Stream B */
+    static const uint8_t mb_lo[16] = {1,5,9,13, 0x11,0x15,0x19,0x1D, 0,0,0,0,0,0,0,0};
+    static const uint8_t mb_hi[16] = {0,0,0,0,0,0,0,0, 1,5,9,13, 0x11,0x15,0x19,0x1D};
+    ml = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, mb_lo), 0);
+    mh = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, mb_hi), 0);
+    __m128i B_lo = __lsx_vshuf_b(R1, R0, ml);
+    __m128i B_hi = __lsx_vshuf_b(R3, R2, mh);
+    __m128i B = __lsx_vbitsel_v(B_hi, B_lo, sl);
+
+    /* Stream C */
+    static const uint8_t mc_lo[16] = {2,6,10,14, 0x12,0x16,0x1A,0x1E, 0,0,0,0,0,0,0,0};
+    static const uint8_t mc_hi[16] = {0,0,0,0,0,0,0,0, 2,6,10,14, 0x12,0x16,0x1A,0x1E};
+    ml = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, mc_lo), 0);
+    mh = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, mc_hi), 0);
+    __m128i C_lo = __lsx_vshuf_b(R1, R0, ml);
+    __m128i C_hi = __lsx_vshuf_b(R3, R2, mh);
+    __m128i C = __lsx_vbitsel_v(C_hi, C_lo, sl);
+
+    /* Stream D */
+    static const uint8_t md_lo[16] = {3,7,11,15, 0x13,0x17,0x1B,0x1F, 0,0,0,0,0,0,0,0};
+    static const uint8_t md_hi[16] = {0,0,0,0,0,0,0,0, 3,7,11,15, 0x13,0x17,0x1B,0x1F};
+    ml = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, md_lo), 0);
+    mh = __lsx_vld(HEDLEY_REINTERPRET_CAST(const void*, md_hi), 0);
+    __m128i D_lo = __lsx_vshuf_b(R1, R0, ml);
+    __m128i D_hi = __lsx_vshuf_b(R3, R2, mh);
+    __m128i D = __lsx_vbitsel_v(D_hi, D_lo, sl);
+
+    simde_uint8x16_private rp[4];
+    rp[0].m128i = A; rp[1].m128i = B; rp[2].m128i = C; rp[3].m128i = D;
+    simde_uint8x16x4_t r = { {
+      simde_uint8x16_from_private(rp[0]), simde_uint8x16_from_private(rp[1]),
+      simde_uint8x16_from_private(rp[2]), simde_uint8x16_from_private(rp[3])
     } };
     return r;
   #else
